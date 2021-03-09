@@ -12,4 +12,4 @@ requires "nimgl >= 1.0.0"
 
 # Tasks
 task gdev, "Run glitch in development mode":
-    exec "nimble run --outdir:build --verbosity:3"
+    exec "nimble run --outdir:'build' --verbosity:3"
