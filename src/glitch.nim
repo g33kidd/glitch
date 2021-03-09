@@ -3,76 +3,56 @@
 import nimgl/imgui, nimgl/imgui/[impl_opengl, impl_glfw]
 import nimgl/[opengl, glfw]
 
-proc main() =
+proc keyCallback(window: GLFWWindow, key: int32, scancode: int32, action: int32, mods: int32) {.cdecl.} =
+  if action == GLFW_PRESS and key == GLFWKey.Escape:
+    window.setWindowShouldClose(true)
+
+# Creates the default igFrame
+proc createDefaultFrame() : void =
+  igOpenGL3NewFrame()
+  igGlfwNewFrame()
+  igNewFrame()
+
+# Handles shutting everything down, or at least things we need to shut down at the end.
+proc shutdown(window: GLFWWindow, ctx: ptr ImGuiContext = nil) : void =
+  igOpenGL3Shutdown()
+  igGlfwShutdown()
+  ctx.igDestroyContext()
+  glfwTerminate()
+
+var counter: int32 = 0
+
+if isMainModule:
+
+  # Setup the GLFW Window
   doAssert glfwInit()
 
+  # window hints
   glfwWindowHint(GLFWContextVersionMajor, 3)
   glfwWindowHint(GLFWContextVersionMinor, 3)
   glfwWindowHint(GLFWOpenglForwardCompat, GLFW_TRUE)
   glfwWindowHint(GLFWOpenglProfile, GLFW_OPENGL_CORE_PROFILE)
   glfwWindowHint(GLFWResizable, GLFW_FALSE)
 
-  var w: GLFWWindow = glfwCreateWindow(1280, 720)
-  if w == nil:
-    quit(-1)
+  # Create the window and make sure it exists 
+  var window: GLFWWindow = glfwCreateWindow(1280, 720, "GLエTCH", nil, nil)
+  doAssert window != nil
 
-  w.makeContextCurrent()
+  discard window.setKeyCallback(keyCallback)
+  window.makeContextCurrent()
 
-  doAssert glInit()
-
+  # Setting up the imgui context
   let context = igCreateContext()
-  #let io = igGetIO()
+  assert context != nil
 
-  doAssert igGlfwInitForOpenGL(w, true)
+  doAssert igGlfwInitForOpenGL(window, true)
   doAssert igOpenGL3Init()
 
-  igStyleColorsCherry()
-
-  var show_demo: bool = true
-  var somefloat: float32 = 0.0f
-  var counter: int32 = 0
-
-  while not w.windowShouldClose:
+  # The running loop I guess.
+  while not window.windowShouldClose:
     glfwPollEvents()
-
-    igOpenGL3NewFrame()
-    igGlfwNewFrame()
-    igNewFrame()
-
-    if show_demo:
-      igShowDemoWindow(show_demo.addr)
-
-    # Simple window
-    igBegin("Hello, world!")
-
-    igText("This is some useful text.")
-    igCheckbox("Demo Window", show_demo.addr)
-
-    igSliderFloat("float", somefloat.addr, 0.0f, 1.0f)
-
-    if igButton("Button", ImVec2(x: 0, y: 0)):
-      counter.inc
-    igSameLine()
-    igText("counter = %d", counter)
-
-    igText("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / igGetIO().framerate, igGetIO().framerate)
-    igEnd()
-    # End simple window
-
+    createDefaultFrame()
     igRender()
 
-    glClearColor(0.45f, 0.55f, 0.60f, 1.00f)
-    glClear(GL_COLOR_BUFFER_BIT)
-
-    igOpenGL3RenderDrawData(igGetDrawData())
-
-    w.swapBuffers()
-
-  igOpenGL3Shutdown()
-  igGlfwShutdown()
-  context.igDestroyContext()
-
-  w.destroyWindow()
-  glfwTerminate()
-
-main()
+  # When the application closes.
+  shutdown(window, context)
