@@ -14,3 +14,6 @@ requires "nim >= 1.4.4"
 
 # Nimble Tasks
 task glitch, "Run application in development":
+    exec """
+    nim c -r src/glitch.nim
+    """
