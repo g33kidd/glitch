@@ -1,3 +1,7 @@
 # Build Files & Vendor Stuff
 ./vendor
 ./build
+
+# Artifacts that we don't care about
+glitch.exe
+imgui.ini
