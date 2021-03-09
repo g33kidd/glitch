@@ -3,6 +3,11 @@ import nimgl/[opengl, glfw]
 
 import ../assets/fonts/roboto_regular
 
+# type NonMovableWindowFlags = {
+#   ImGuiWindowFlags.NoTitleBar,
+#   ImGuiWindowFlags.NoMove
+# }
+
 proc keyCallback(window: GLFWWindow, key: int32, scancode: int32, action: int32, mods: int32) {.cdecl.} =
   if action == GLFW_PRESS and key == GLFWKey.Escape:
     window.setWindowShouldClose(true)
@@ -26,6 +31,8 @@ proc shutdown(window: GLFWWindow, ctx: ptr ImGuiContext) : void =
   glfwTerminate()
 
 proc setupFonts(font_atlas: ptr ImFontAtlas) {.cdecl.} =
+  assert font_atlas != nil
+
   # Sets the default font for the application, in-case we can't find the others or something goes wrong
   addFontDefault(font_atlas)
 
@@ -76,13 +83,11 @@ if isMainModule:
   doAssert igOpenGL3Init()
   igStyleColorsDark()
 
-
   # Setup using Roboto Font
   var 
     counter: uint32 = 0
     somefloat: float32 = 0.0f
     display: ptr bool
-
   
   # Ensure our font(s) are loaded
   # let io: ptr ImGuiIO = igGetIO()  
@@ -98,8 +103,18 @@ if isMainModule:
     # At the moment I'm not sure if you need to call igRender() after each igEnd() or not.
     # ===
 
-        # Simple window
-    igBegin("Hello, world!", display, ImGuiWindowFlags.NoMove)
+    # let flags = cast[ImGuiWindowFlags](set[
+    #   ImGuiWindowFlags
+    # ])
+
+    # Simple window
+    var windowFlags = (
+      ImGuiWindowFlags.NoTitleBar.int32 or
+      ImGuiWindowFlags.NoMove.int32 or
+      ImGuiWindowFlags.NoResize.int32
+    ).ImGuiWindowFlags
+
+    igBegin("Hello, world!", display, windowFlags)
 
     igText("This is some useful text.")
     igSliderFloat("float", somefloat.addr, 0.0f, 1.0f)
