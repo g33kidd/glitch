@@ -1,12 +1,9 @@
 [submodule "vendor/sdl2"]
 	path = vendor/sdl2
 	url = https://github.com/nim-lang/sdl2.git
-[submodule "vendor/bgfx.nim"]
-	path = vendor/bgfx.nim
-	url = https://github.com/zacharycarter/bgfx.nim.git
-[submodule "vendor/nuklear-nim"]
-	path = vendor/nuklear-nim
-	url = https://github.com/zacharycarter/nuklear-nim.git
-[submodule "vendor/nimrod-glfw"]
-	path = vendor/nimrod-glfw
-	url = https://github.com/rafaelvasco/nimrod-glfw.git
+[submodule "vendor/opengl"]
+	path = vendor/opengl
+	url = https://github.com/nim-lang/opengl
+[submodule "vendor/nimgl"]
+	path = vendor/nimgl
+	url = https://github.com/nimgl/nimgl.git
