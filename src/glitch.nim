@@ -1,11 +1,13 @@
 import nimgl/imgui, nimgl/imgui/[impl_opengl, impl_glfw]
 import nimgl/[opengl, glfw]
+import streams
 
 # import ./files
 
 import ./components
 import ./text
 import ./handlers
+import ./imgui_vs
 
 var
   defaultW: int32 = 1280
@@ -30,7 +32,20 @@ proc shutdown(window: GLFWWindow, ctx: ptr ImGuiContext) : void =
   window.destroyWindow()
   glfwTerminate()
 
-proc main() =
+let fshader_fs: FileStream = newFileStream("../shaders/example_fragment_shader.glsl", fmRead)
+let vshader_fs: FileStream = newFileStream("../shaders/example_vertex_shader.glsl", fmRead)
+
+var line: string = ""
+var result: string = ""
+
+if not isNil(fs):
+  when readLine(fs, line):
+    result.add(line)
+    echo line
+echo result
+
+
+if isMainModule:
   # Setup the GLFW Window
   doAssert glfwInit()
 
@@ -54,14 +69,33 @@ proc main() =
 
   doAssert glInit()
   
+  var vertex_buffer, vertex_shader, fragment_shader, program: GLuint
+  var 
+    vertex_shader_fs: FileStream = newFileStream("../shaders/example_vertex_shader.glsl", fmRead)
+    fragment_shader_fs: FileStream = newFileStream("../shaders/example_fragment_shader.glsl", fmRead)
+
+  var line = ""
+
+  if not isNil(vertex_shader_fs):
+    while vertex_shader_fs.readLine(line):
+      
+
   var 
     w: GLint = cast[GLint](defaultW)
     h: GLint = cast[GLint](defaultH)
+    vertices: GLuint
+    
+  glCreateVertexArrays 3, addr vertices
 
   # Honestly I'm not sure what to do with that at the moment.
-  getFramebufferSize(window, addr w, addr h)
-  glViewport(0, 0, w, h)
+  getFramebufferSize window, addr w, addr h
+  glViewport 0, 0, w, h
 
+  # It says error checks were omitted in the original code for brevity.
+  # TODO need to find out where those error checks are.
+  glGenBuffers 1, addr vertex_buffer
+  glBindBuffer GL_ARRAY_BUFFER, vertex_buffer
+  glBufferData GL_ARRAY_BUFFER, vertice_size
 
   # Setting up the imgui context
   let context = igCreateContext()
@@ -103,6 +137,4 @@ proc main() =
     glfwSwapInterval swapint # not sure if this needs to be moved elsewhere..
     swapBuffers window
 
-  # When the application closes.
-  main()
   shutdown(window, context)
