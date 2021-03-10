@@ -1,16 +1,15 @@
 import nimgl/imgui, nimgl/imgui/[impl_opengl, impl_glfw]
 import nimgl/[opengl, glfw]
 
-import ../assets/fonts/roboto_regular
+# import ./files
 
-# type NonMovableWindowFlags = {
-#   ImGuiWindowFlags.NoTitleBar,
-#   ImGuiWindowFlags.NoMove
-# }
+import ./text
+import ./handlers
 
-proc keyCallback(window: GLFWWindow, key: int32, scancode: int32, action: int32, mods: int32) {.cdecl.} =
-  if action == GLFW_PRESS and key == GLFWKey.Escape:
-    window.setWindowShouldClose(true)
+var
+  defaultW: int32 = 1280
+  defaultH: int32 = 720
+
 
 # Creates the default igFrame
 proc initFrame() {.cdecl.} =
@@ -30,36 +29,15 @@ proc shutdown(window: GLFWWindow, ctx: ptr ImGuiContext) : void =
   window.destroyWindow()
   glfwTerminate()
 
-proc setupFonts(font_atlas: ptr ImFontAtlas) {.cdecl.} =
-  assert font_atlas != nil
-
-  # Sets the default font for the application, in-case we can't find the others or something goes wrong
-  addFontDefault(font_atlas)
-
-  var font_data: pointer = addr s_robotoRegularTtf
-
-  igImFontAtlasBuildInit(font_atlas)
-
-  var roboto_font: ptr ImFont = addFontFromMemoryCompressedTTF(
-    font_atlas, 
-    font_data, 
-    int32 sizeof(s_robotoRegularTtf), 
-    18.0f, 
-    nil,
-    getGlyphRangesDefault(font_atlas)
-  )
-
-  # igImFontAtlasBuildSetupFont(font_atlas, roboto_font, font_config, 0.0f, 0.0f)
-  igImFontAtlasBuildFinish(font_atlas)
-  igSetCurrentFont(roboto_font)
-
-# Application Start
-if isMainModule:
-
+proc main() =
   # Setup the GLFW Window
   doAssert glfwInit()
 
+  # TODO handlers.nim
+  # glfwSetErrorCallback(errorCallback)
+
   # window hints
+  glfwWindowHint(GLFWSamples, 4)
   glfwWindowHint(GLFWContextVersionMajor, 3)
   glfwWindowHint(GLFWContextVersionMinor, 3)
   glfwWindowHint(GLFWOpenglForwardCompat, GLFW_TRUE)
@@ -67,13 +45,20 @@ if isMainModule:
   glfwWindowHint(GLFWResizable, GLFW_FALSE)
 
   # Create the window and make sure it exists 
-  var window: GLFWWindow = glfwCreateWindow(1280, 720, "GLエTCH", nil, nil)
+  var window: GLFWWindow = glfwCreateWindow(defaultW, defaultH, "GLエTCH", nil, nil)
   doAssert window != nil
 
   discard window.setKeyCallback(keyCallback)
   window.makeContextCurrent()
 
   doAssert glInit()
+  
+  var 
+    w: GLint = cast[GLint](defaultW)
+    h: GLint = cast[GLint](defaultH)
+
+  getFramebufferSize(window, addr w, addr h)
+  glViewport(0, 0, w, h)
 
   # Setting up the imgui context
   let context = igCreateContext()
@@ -83,11 +68,16 @@ if isMainModule:
   doAssert igOpenGL3Init()
   igStyleColorsDark()
 
-  # Setup using Roboto Font
   var 
     counter: uint32 = 0
     somefloat: float32 = 0.0f
     display: ptr bool
+
+  # var imageBuffer: array[int32, byte] = array[4, byte]
+  # let testFile: File = open("../assets/image.png")
+  # readBuffer(testFile, imageBuffer, 0)
+  # defer: testFile.close()
+
   
   # Ensure our font(s) are loaded
   # let io: ptr ImGuiIO = igGetIO()  
@@ -130,12 +120,13 @@ if isMainModule:
 
     igRender()
 
-    glClearColor(0.45f, 0.55f, 0.60f, 1.00f)
-    glClear(GL_COLOR_BUFFER_BIT)
+    # glClearColor(0.45f, 0.55f, 0.60f, 1.00f)
+    glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
 
     igOpenGL3RenderDrawData(igGetDrawData())
 
     window.swapBuffers()
 
   # When the application closes.
+  main()
   shutdown(window, context)
