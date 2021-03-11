@@ -2,6 +2,11 @@
 import nimgl/imgui
 import ../assets/fonts/roboto_regular
 
+  
+  # Ensure our font(s) are loaded
+  # let io: ptr ImGuiIO = igGetIO()  
+  # setupFonts(io.fonts)
+
 proc setupFonts(font_atlas: ptr ImFontAtlas) {.cdecl.} =
   assert font_atlas != nil
 

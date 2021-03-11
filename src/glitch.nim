@@ -1,13 +1,13 @@
 import nimgl/imgui, nimgl/imgui/[impl_opengl, impl_glfw]
 import nimgl/[opengl, glfw]
-import streams
 
 # import ./files
 
+import ./shapes
 import ./components
 import ./text
 import ./handlers
-import ./imgui_vs
+import ./shaders
 
 var
   defaultW: int32 = 1280
@@ -32,17 +32,13 @@ proc shutdown(window: GLFWWindow, ctx: ptr ImGuiContext) : void =
   window.destroyWindow()
   glfwTerminate()
 
-let fshader_fs: FileStream = newFileStream("../shaders/example_fragment_shader.glsl", fmRead)
-let vshader_fs: FileStream = newFileStream("../shaders/example_vertex_shader.glsl", fmRead)
+# var line: string = ""
+# var result: string = ""
 
-var line: string = ""
-var result: string = ""
-
-if not isNil(fs):
-  when readLine(fs, line):
-    result.add(line)
-    echo line
-echo result
+# if not isNil(fs):
+#   when readLine(fs, line):
+#     result.add(line)
+#     echo line
 
 
 if isMainModule:
@@ -68,36 +64,38 @@ if isMainModule:
   window.makeContextCurrent()
 
   doAssert glInit()
-  
-  var vertex_buffer, vertex_shader, fragment_shader, program: GLuint
-  var 
-    vertex_shader_fs: FileStream = newFileStream("../shaders/example_vertex_shader.glsl", fmRead)
-    fragment_shader_fs: FileStream = newFileStream("../shaders/example_fragment_shader.glsl", fmRead)
 
-  var line = ""
+  var
+    vbo: GLuint = GLuint(0) # Vertex Buffer Object
+    vao: GLuint = GLuint(0)# Vertex Array Object
+    w: GLint = GLint(defaultW)
+    h: GLint = GLint(defaultH)
+    tri_vertex_array: seq[float32] =
+      @[
+        0.5'f32, -0.5'f32, 0.0'f32,  1.0'f32, 0.0'f32, 0.0'f32,  # bottom right
+        -0.5'f32, -0.5'f32, 0.0'f32,  0.0'f32, 1.0'f32, 0.0'f32,  # bottom left
+        0.0'f32,  0.5'f32, 0.0'f32,  0.0'f32, 0.0'f32, 1.0'f32 ]
 
-  if not isNil(vertex_shader_fs):
-    while vertex_shader_fs.readLine(line):
-      
+  var tri_vertex_array_isize = GLsizeiptr sizeof(triangle_vertex_array)
+  # Setting up the vertex buffer object
+  glGenBuffers 1, addr(vbo)
+  glBindBuffer GL_ARRAY_BUFFER, vbo
+  glBufferData GL_ARRAY_BUFFER, tri_vertex_array_isize, addr tri_vertex_array, GL_STATIC_DRAW
 
-  var 
-    w: GLint = cast[GLint](defaultW)
-    h: GLint = cast[GLint](defaultH)
-    vertices: GLuint
-    
-  glCreateVertexArrays 3, addr vertices
+  # Setting up the vertex array object, which keeps track of buffers that you want to use.
+  # It also stores the memory address of each one you want to use in memory.
+  glGenVertexArrays 1, addr(vao)
+  glBindVertexArray vao
+  glEnableVertexAttribArray 0
+  glBindBuffer GL_ARRAY_BUFFER, vbo
+  glVertexAttribPointer(
+    0.GLuint, 
+    3.GLint, 
+    GLenum(0), # ! GL_FLOAT.GLenum is supposed to work???
+    GL_FALSE.GLboolean, 
+    GLsizei(0), cast[ptr GLvoid](0))
+  # glVertexAttribPointer GLuint(0), GLint(3), GL_FLOAT, GL_FALSE, GLsizei(0), pointer(nil)
 
-  # Honestly I'm not sure what to do with that at the moment.
-  getFramebufferSize window, addr w, addr h
-  glViewport 0, 0, w, h
-
-  # It says error checks were omitted in the original code for brevity.
-  # TODO need to find out where those error checks are.
-  glGenBuffers 1, addr vertex_buffer
-  glBindBuffer GL_ARRAY_BUFFER, vertex_buffer
-  glBufferData GL_ARRAY_BUFFER, vertice_size
-
-  # Setting up the imgui context
   let context = igCreateContext()
   assert context != nil
 
@@ -108,17 +106,6 @@ if isMainModule:
   var display_example_component: ptr bool
   var swapint: int32 = 1
 
-  # var imageBuffer: array[int32, byte] = array[4, byte]
-  # let testFile: File = open("../assets/image.png")
-  # readBuffer(testFile, imageBuffer, 0)
-  # defer: testFile.close()
-
-  
-  # Ensure our font(s) are loaded
-  # let io: ptr ImGuiIO = igGetIO()  
-  # setupFonts(io.fonts)
-
-  # The running loop I guess.
   while not window.windowShouldClose:
     glfwPollEvents()
     initFrame()
@@ -133,6 +120,9 @@ if isMainModule:
     glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
 
     igOpenGL3RenderDrawData igGetDrawData()
+
+    getFramebufferSize window, addr w, addr h
+    glViewport 0, 0, w, h
 
     glfwSwapInterval swapint # not sure if this needs to be moved elsewhere..
     swapBuffers window

@@ -1,5 +1,11 @@
 import streams
 
+
+  # var imageBuffer: array[int32, byte] = array[4, byte]
+  # let testFile: File = open("../assets/image.png")
+  # readBuffer(testFile, imageBuffer, 0)
+  # defer: testFile.close()
+
 proc loadShaderFromFileStream(fs: ptr FileStream) : string =
   doAssert fs != nil
   var line = ""
